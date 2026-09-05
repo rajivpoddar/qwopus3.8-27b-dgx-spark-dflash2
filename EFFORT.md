@@ -1,5 +1,16 @@
 # Enforced effort budgets
 
+## Operator force-off experiment
+
+`QWOPUS_FORCE_THINKING_OFF=1` overrides all Anthropic client thinking and effort
+settings before the budget policy. It sets `enable_thinking=false` and the
+strict grammar budget to zero without changing the total answer limit.
+This override covers the slots' Anthropic endpoint, not arbitrary OpenAI clients.
+Build `image/Dockerfile.thinking-off` and explicitly set the variable when
+cloning container configuration. Deploy with paused requests and preserved slot
+sessions; no clear or slot restart is required. Roll back to the preserved effort
+container to restore effort behavior. This does not eliminate cold prefill cost.
+
 ## Deployment receipt — 2026-09-05
 
 Deployed `qwopus-pango-dflash-effort`, image

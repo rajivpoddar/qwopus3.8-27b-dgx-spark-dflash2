@@ -6,6 +6,11 @@ BUDGETS = {'low': 1024, 'medium': 4096, 'high': 8192, 'xhigh': 16384, 'max': 327
 
 
 def apply_effort_policy(request, chat, serving):
+    # Operator override takes precedence over every client effort/budget.
+    if os.environ.get('QWOPUS_FORCE_THINKING_OFF') == '1':
+        serving.apply_reasoning_enabled(chat, False)
+        chat.custom_params = {**(chat.custom_params or {}), 'thinking_budget': 0}
+        return
     if os.environ.get('QWOPUS_EFFORT_BUDGETS') != '1':
         return
     args = serving.tokenizer_manager.server_args

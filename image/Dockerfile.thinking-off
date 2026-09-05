@@ -1,0 +1,3 @@
+FROM qwopus-effort:v1
+COPY effort_policy.py /sgl-workspace/sglang/python/sglang/srt/entrypoints/anthropic/effort_policy.py
+ENV QWOPUS_FORCE_THINKING_OFF=1

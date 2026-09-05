@@ -1,7 +1,8 @@
 """CPU integration: actual adapter, grammar-manager budget and grammar transitions."""
 import unittest
 from types import SimpleNamespace as NS
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+import os
 from sglang.srt.entrypoints.anthropic.serving import AnthropicServing
 from sglang.srt.entrypoints.anthropic.protocol import AnthropicMessagesRequest
 from sglang.srt.entrypoints.anthropic.compaction_policy import COMPACTION_SYSTEM
@@ -17,6 +18,14 @@ class Backend:
 
 
 class TestEffort(unittest.TestCase):
+    def test_operator_force_off_wins(self):
+        with patch.dict(os.environ, {'QWOPUS_FORCE_THINKING_OFF':'1', 'QWOPUS_EFFORT_BUDGETS':'0'}):
+            for effort in BUDGETS:
+                chat = self.convert(effort, thinking={'type':'enabled','budget_tokens':32768})
+                self.assertFalse(chat.chat_template_kwargs['enable_thinking'])
+                self.assertEqual(chat.custom_params['thinking_budget'], 0)
+                self.assertEqual(chat.max_tokens, 40000)
+
     def convert(self, effort='low', **extra):
         adapter = AnthropicServing.__new__(AnthropicServing)
         adapter._merge_inline_system = False
