@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=qwopus-compaction-base:db815495d86f
+FROM ${BASE_IMAGE}
+COPY compaction_policy.py /sgl-workspace/sglang/python/sglang/srt/entrypoints/anthropic/compaction_policy.py
+COPY patch_compaction.py /opt/pango-patches/patch_compaction.py
+RUN python /opt/pango-patches/patch_compaction.py
+LABEL io.heydonna.compaction-policy="exact-system-thinking-off-v1"

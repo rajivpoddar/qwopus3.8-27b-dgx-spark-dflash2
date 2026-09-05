@@ -1,0 +1,7 @@
+ARG BASE_IMAGE=qwopus-compaction:v1
+FROM ${BASE_IMAGE}
+COPY effort_policy.py /sgl-workspace/sglang/python/sglang/srt/entrypoints/anthropic/effort_policy.py
+COPY patch_effort.py /opt/pango-patches/patch_effort.py
+RUN python /opt/pango-patches/patch_effort.py
+ENV QWOPUS_EFFORT_BUDGETS=1 SGLANG_MAX_THINK_TOKENS=1024
+# Required launch flags: --enable-strict-thinking --grammar-backend xgrammar

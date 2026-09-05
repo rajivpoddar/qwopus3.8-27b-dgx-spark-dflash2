@@ -16,10 +16,16 @@ a maintenance window. See the linked guide before running either path.
 Live observations on 2026-09-05: 20–27 tok/s at approximately 201K context with
 one request; later 39–43 tok/s aggregate with two requests. These are not
 controlled benchmarks. Long compactions and reasoning remain a known latency
-problem, even while tokens continue arriving. No bounded-compaction fix is
-included here.
+problem, even while tokens continue arriving. The
+[compaction-only thinking-off patch](COMPACTION.md) is deployed and passed
+short inference probes; it does not impose an output-length cap or establish
+a measured improvement on long-history compactions yet.
 
 ## Inherited Pango documentation and benchmarks
+
+An [enforced thinking-level candidate](EFFORT.md) maps effort to strict grammar
+budgets. It is tested offline but not deployed; ordinary production thinking
+still has no per-level enforcement until activation and GPU validation.
 
 The material below describes the original **Qwen**, not Qwopus, benchmarks.
 Generic `serve.sh` retains its Qwen defaults; use the Qwopus guide above.
