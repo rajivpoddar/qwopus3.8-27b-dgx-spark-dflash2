@@ -11,6 +11,14 @@ cloning container configuration. Deploy with paused requests and preserved slot
 sessions; no clear or slot restart is required. Roll back to the preserved effort
 container to restore effort behavior. This does not eliminate cold prefill cost.
 
+Deployed 2026-09-05 as `qwopus-pango-dflash-thinking-off`, image
+`sha256:dd967e4ffa4bf055589c5a8fda4a8823b2c9f33b89dc622087d35667babb1c65`.
+Four CPU integration tests passed. Live authenticated curl explicitly requested
+enabled thinking, a 32768-token budget and max effort: HTTP 200, zero thinking
+characters, valid `record_result` tool call, 28 output tokens. No tool was
+executed. Model discovery passed; startup had zero restarts and no OOM.
+The preserved rollback container is `qwopus-pango-dflash-effort`.
+
 ## Deployment receipt — 2026-09-05
 
 Deployed `qwopus-pango-dflash-effort`, image
