@@ -1,4 +1,29 @@
-# Enforced effort candidate (not deployed)
+# Enforced effort budgets
+
+## Deployment receipt — 2026-09-05
+
+Deployed `qwopus-pango-dflash-effort`, image
+`sha256:e11dc62385a2af8c0a242a5eb85490b91844d897605166b26c72e645b408f121`,
+with strict thinking, xgrammar, and the two environment settings below.
+`activate-effort.py` preserves the prior container for rollback. No model assets
+or Claude sessions were replaced. Authenticated model discovery and Anthropic
+inference passed; startup had zero restarts and no OOM.
+
+Live DFlash probes for low, medium, and high each returned a valid synthetic
+tool call. These used an explicit 1024-token budget, so they prove compatibility,
+not saturation of the distinct default caps. A separate headroom-bound probe
+with a 64-token effective reasoning budget emitted 63 retokenized thinking
+tokens and completed a valid tool call. The exact compaction-system probe
+returned zero thinking and a complete answer. No synthetic tool was executed.
+
+The CPU integration test covers all five default budget mappings and the real
+grammar transition at each cap. Full-cap GPU saturation and naturally occurring
+Claude effort/compaction request matching remain follow-up validation; do not
+infer them from the short synthetic probes.
+
+Rollback: stop `qwopus-pango-dflash-effort`, start the preserved
+`qwopus-pango-dflash-compaction`, and verify authenticated inference before
+resuming requests. Do not run the two model servers concurrently.
 
 The effort image maps Anthropic `output_config.effort` into SGLang's existing
 `custom_params.thinking_budget` strict-reasoning grammar. This is not a prompt
@@ -50,10 +75,10 @@ and actual ReasonerGrammarObject token transitions for all five levels, plus
 disabled/compaction paths and answer headroom. It uses a lightweight backend
 for setting the chat-template toggle and observing vocabulary masks.
 
-This proves policy/grammar behavior, not end-to-end GPU generation. Before live
-adoption, verify emitted reasoning lengths and complete valid tool calls at low,
-medium and high, with DFlash enabled, including a request with prior thinking
-history. Check actual Claude requests carry the effort field. Existing default
+This test proves policy/grammar behavior, not end-to-end GPU generation. The
+deployment probes above additionally cover short GPU tool calls and a forced
+budget boundary. Still validate a request with prior thinking history and check
+actual Claude requests carry the effort field. Existing default
 compaction matching remains narrow and is not validated for every Claude mode.
 Do not advertise effective slot levels until that live-client proof passes.
 
