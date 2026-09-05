@@ -1,7 +1,28 @@
-# Qwen3.8-27B on one DGX Spark (GB10)
+# Qwopus on one DGX Spark (GB10)
 
-**Qwopus experiment:** [target-only profile on the patched Pango runtime](QWOPUS.md).
-This is opt-in and has no Qwopus performance claims; default Pango serving is unchanged.
+Derived with full history from [our patched Pango fork](https://github.com/rajivpoddar/qwen3.8-27b-dgx-spark-dflash2), originally by [pangoleen](https://github.com/pangoleen/qwen3.8-27b-dgx-spark-dflash2).
+
+**Start here: [Qwopus setup, validation and rollback](QWOPUS.md).** The deployed
+profile uses `sojufx/Qwopus3.8-27B-Flash-NVFP4` with DFlash2, thinking enabled,
+262,144-token context, BF16 KV cache and the patched Anthropic streaming runtime.
+It replaces the existing server; do not run both models together.
+
+`serve-qwopus.sh` is the target-only baseline. `activate-qwopus-dflash.py` is the
+host-specific migration to the tested DFlash profile, not a portable installer:
+it requires the preserved containers, exact local image and cached checkpoints.
+It defaults to read-only preflight; `--activate` changes the server and requires
+a maintenance window. See the linked guide before running either path.
+
+Live observations on 2026-09-05: 20–27 tok/s at approximately 201K context with
+one request; later 39–43 tok/s aggregate with two requests. These are not
+controlled benchmarks. Long compactions and reasoning remain a known latency
+problem, even while tokens continue arriving. No bounded-compaction fix is
+included here.
+
+## Inherited Pango documentation and benchmarks
+
+The material below describes the original **Qwen**, not Qwopus, benchmarks.
+Generic `serve.sh` retains its Qwen defaults; use the Qwopus guide above.
 
 **HeyDonna experimental fork:** [prefill fairness overlay](PREFILL_FAIRNESS.md)
 vendors SGLang PR #34058 as a separate opt-in image. Default serving is unchanged;

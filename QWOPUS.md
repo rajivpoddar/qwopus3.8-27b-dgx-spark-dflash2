@@ -1,6 +1,7 @@
 # Qwopus on the patched Pango runtime (experimental)
 
-This is an experimental **target-only baseline**, not a measured speed improvement.
+This guide includes the original **target-only baseline** and the subsequently
+deployed **DFlash profile** (see the DFlash trial section below).
 It reuses our fairness/Anthropic-heartbeat image described in
 [STREAM_FIX.md](STREAM_FIX.md). It does not start a second model alongside Pango.
 No model files are downloaded by this profile.
@@ -8,7 +9,7 @@ No model files are downloaded by this profile.
 ## Deliberate differences
 
 - Target: `sojufx/Qwopus3.8-27B-Flash-NVFP4`, pinned to an explicit cached SHA.
-- Speculation **off**. Do not reuse the base Qwen DFlash2 draft without testing
+- In the baseline, speculation is **off**. Do not reuse the base Qwen DFlash2 draft without testing
   compatibility, acceptance and output correctness against this fine-tune.
 - Thinking **on** by default for this Qwopus profile (`enable_thinking=true`);
   `preserve_thinking` remains false. Generic Pango defaults remain unchanged.
