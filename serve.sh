@@ -9,8 +9,13 @@ set -euo pipefail
 # draft CUDA graph on the NVFP4 packed lm_head. Older builds run it eager.
 IMAGE=${IMAGE:-qwen38-27b-sglang-dflash2-sm121:0.3.0}
 NAME=${NAME:-sglang38-dflash2}
+REPLACE_EXISTING=${REPLACE_EXISTING:-1}
 PORT=${PORT:-8003}
 MODEL=${MODEL:-RadixArk/Qwen3.8-27B-NVFP4}
+TOOL_PARSER=${TOOL_PARSER:-qwen3_coder}
+ENABLE_THINKING=${ENABLE_THINKING:-false}
+case "$ENABLE_THINKING" in true|false) ;; *) echo 'ENABLE_THINKING must be true or false' >&2; exit 2 ;; esac
+CHAT_TEMPLATE=${CHAT_TEMPLATE:-}
 
 # The NVFP4 drafter: 1.45 GB of weights per pass instead of 3.85, acceptance
 # unchanged, +5 to +10% generation. It needs its scheme named explicitly.
@@ -136,7 +141,15 @@ if [ "$SPEC" = "1" ]; then check_ref "$DRAFT"; fi
 
 mkdir -p "$SGLANG_CACHE"
 
-docker rm -f "$NAME" >/dev/null 2>&1 || true
+if [ "$REPLACE_EXISTING" = "1" ]; then
+  docker rm -f "$NAME" >/dev/null 2>&1 || true
+elif docker container inspect "$NAME" >/dev/null 2>&1; then
+  echo "REFUSED: container $NAME already exists; preserve it or choose another NAME." >&2
+  exit 2
+fi
+
+TEMPLATE_ARGS=()
+[ -z "$CHAT_TEMPLATE" ] || TEMPLATE_ARGS=(--chat-template "$CHAT_TEMPLATE")
 
 EXTRA="${EXTRA_ARGS:-}"
 [ "$AUTOTUNE" = "0" ] && case "$EXTRA" in *disable-flashinfer-autotune*) ;; *) EXTRA="$EXTRA --disable-flashinfer-autotune" ;; esac
@@ -167,9 +180,9 @@ docker run -d --name "$NAME" --restart unless-stopped \
   --attention-backend flashinfer --kv-cache-dtype ${KV_DTYPE} \
   --chunked-prefill-size ${CHUNK} --mamba-ssm-dtype ${SSM_DTYPE} \
   --mamba-radix-cache-strategy extra_buffer --page-size 1 \
-  --mamba-full-memory-ratio 11.93 \
-  --reasoning-parser qwen3 --tool-call-parser qwen3_coder \
-  --default-chat-template-kwargs "{\"enable_thinking\": false, \"preserve_thinking\": false}" \
+  --mamba-full-memory-ratio ${MAMBA_MEMORY_RATIO:-11.93} \
+  --reasoning-parser qwen3 --tool-call-parser "$TOOL_PARSER" "${TEMPLATE_ARGS[@]}" \
+  --default-chat-template-kwargs "{\"enable_thinking\": ${ENABLE_THINKING}, \"preserve_thinking\": false}" \
   --max-running-requests ${MAX_RUNNING} --enable-metrics ${EXTRA} \
   $SPEC_ARGS
 
@@ -181,7 +194,9 @@ for i in $(seq 1 120); do
     echo "ready after ${i}0s"
     # A config bug that hides behind a healthy-looking server is the failure
     # mode this project keeps rediscovering. Make this one visible.
-    if docker logs "$NAME" 2>&1 | grep -q "kept eager (reason=quantized lm_head)"; then
+    if [ "$SPEC" != "1" ]; then
+      echo "speculation disabled: target-only baseline"
+    elif docker logs "$NAME" 2>&1 | grep -q "kept eager (reason=quantized lm_head)"; then
       echo
       echo "WARNING: the DFlash2 selector is running EAGER, outside the draft"
       echo "CUDA graph. This image predates upstream PR #35496. Expect lower"
